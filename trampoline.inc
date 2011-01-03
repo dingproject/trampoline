@@ -12,7 +12,6 @@ function trampoline_run($config) {
 	global $language; //Language global used by Drupal
 	global $profile; // Profile global used by Drupal
 	global $base_path;
-
 	$trampoline_config = $config;
 	
 	//Set profile
@@ -26,7 +25,7 @@ function trampoline_run($config) {
 	
 	//Do not display errors as output will prevent us from setting headers
 	ini_set('display_errors', FALSE);
-	
+  ini_set('error_reporting', 'E_ALL & ~E_NOTICE');
 	// We (re)use the q variable to represent the original path
 	$path = $_REQUEST['q'];
 	if (isset($config['routes']) && is_array($config['routes'])) {
@@ -36,17 +35,19 @@ function trampoline_run($config) {
   		if ($args !== FALSE) {
   			//We've found our active route!
   			$trampoline_route = $config;
-  			
   			// Include required files
+        if (array_key_exists('ctools_plugin_directory', $trampoline_config['hooks'])) {
+          require drupal_get_path('module', $trampoline_config['hooks']['ctools_plugin_directory']) . '/' . $trampoline_config['hooks']['ctools_plugin_directory']. '.module';
+        }
   			if (isset($config['includes']) && is_array($config['includes'])) {
   				$base_path = trampoline_base_path();
   				foreach ($config['includes'] as $file) {
-  					require $base_path.'/'.$file;
+            require $base_path.'/'.$file;
   				}
   			}
   			// Execute callback with arguments
-  			if (isset($config['callback'])) {
-    			print call_user_func_array($config['callback'], $args);
+  			if (isset($config['callback']) && function_exists($config['callback'])) {
+          print call_user_func_array($config['callback'], $args);
   			}
   		}
   	}
