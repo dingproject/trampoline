@@ -4,76 +4,83 @@
  * Implements hook_init()
  */
 function trampoline_init() {
-	drupal_add_js(array('trampolinePath' => '/' . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');	
+  drupal_add_js(array('trampolinePath' => '/' . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');
 }
 
 /**
  * Implementation of hook_exit()
  */
 function trampoline_exit() {
-	global $language;
-	global $profile;
-	global $theme_key;
-	 
+  global $language;
+  global $theme_key;
+  $profile = variable_get('install_profile', 'default');
+
   //$config_path = file_create_path('trampoline.config.inc');
-	// Only build the configuration files once. 
-	// Clear the cache to rebuild it!
-	if (!file_exists('./sites/default/files/trampoline.config.inc')) {
-		$trampoline_config = array();
-		
-		//Build base configuration
-		$trampoline_config['language'] = $language->language;
-		$trampoline_config['profile'] = $profile;
-		$trampoline_config['theme_path'] = drupal_get_path('theme', $theme_key);
-		
-		//Build route configuration
-		$trampoline_routes = array();
+  // Only build the configuration files once.
+  // Clear the cache to rebuild it!
+  if (!file_exists('./sites/default/files/trampoline.config.inc')) {
+    $trampoline_config = array();
 
-		$routes = module_invoke_all('trampoline');
+    //Build base configuration
+    $trampoline_config['language'] = $language->language;
+    $trampoline_config['profile'] = $profile;
+    $trampoline_config['theme_path'] = drupal_get_path('theme', $theme_key);
 
-		// We need these basic structures to build the trampoline config		
-		$menu_router = menu_router_build();
-		// NB: The theme registry is only available from this function if it has been build previously.
-		$theme_registry = theme_get_registry();
-		foreach ($routes as $route => $config) {
-			if (isset($menu_router[$route])) {
-				$menu_route = $menu_router[$route];
-			  
-				//Build the route configuration
-	      $route_config = array();
-	      
-        $route_config['module'] = $menu_route['module']; 
-        $route_config['module_path'] = drupal_get_path('module', $menu_route['module']); 
-        
-	      //Get the files to load
-	      $module_path = drupal_get_path('module', $menu_route['module']);
-	      
-	      $route_config['includes'] = array($module_path .'/'.$menu_route['module'].'.module');
-	      if (isset($config['includes'])) {
-	      	$route_config['includes'] = array_merge($route_config['includes'], $config['includes']);
-	      }
-	      if ($menu_route['file']) {
-		      $route_config['includes'][] = $module_path.'/'.$menu_route['file'];
-	      }
-	      
-	      //Get the callback
-	      $route_config['callback'] = $menu_route['page callback'];
-	      
-	      //Get the arguments
-	      $route_config['arguments'] = $menu_route['page arguments'];
-        
-	      if (isset($config['theme_hooks'])) {
+    //Build route configuration
+    $trampoline_routes = array();
+
+    $routes = module_invoke_all('trampoline');
+
+    // We need these basic structures to build the trampoline config
+    $menu_router = menu_router_build();
+    // NB: The theme registry is only available from this function if it has been build previously.
+    $theme_registry = theme_get_registry();
+    foreach ($routes as $route => $config) {
+      if (isset($menu_router[$route])) {
+        $menu_route = $menu_router[$route];
+
+        //Build the route configuration
+        $route_config = array();
+
+        $route_config['module'] = $menu_route['module'];
+        $route_config['module_path'] = drupal_get_path('module', $menu_route['module']);
+
+        //Get the files to load
+        $module_path = drupal_get_path('module', $menu_route['module']);
+
+        $route_config['includes'] = array($module_path .'/'.$menu_route['module'].'.module');
+        if (isset($config['includes'])) {
+          $route_config['includes'] = array_merge($route_config['includes'], $config['includes']);
+        }
+        if ($menu_route['file']) {
+          $route_config['includes'][] = $module_path.'/'.$menu_route['file'];
+        }
+
+        //Get the callback
+        $route_config['callback'] = $menu_route['page callback'];
+
+        //Get the arguments
+        $route_config['arguments'] = $menu_route['page arguments'];
+
+        if (isset($config['variables'])) {
+          $route_config['variables'] = array();
+          foreach ($config['variables'] as $variable) {
+            $route_config['variables'][$variable] = variable_get($variable, NULL);
+          }
+        }
+
+        if (isset($config['theme_hooks'])) {
           //Get theme information
           $route_config['theme'] = array();
-	      	foreach ($config['theme_hooks'] as $theme_hook) {
-	      		$route_config['theme'][$theme_hook] = $theme_registry[$theme_hook];
-	      	}
-	      }
-	      
-	      $trampoline_routes[$route] = $route_config;
-			}
+          foreach ($config['theme_hooks'] as $theme_hook) {
+            $route_config['theme'][$theme_hook] = $theme_registry[$theme_hook];
+          }
+        }
 
-			$trampoline_config['routes'] = $trampoline_routes;
+        $trampoline_routes[$route] = $route_config;
+      }
+
+      $trampoline_config['routes'] = $trampoline_routes;
 
       if (is_array($config['hooks'])) {
         foreach ($config['hooks'] as $hook => $name) {
@@ -92,19 +99,19 @@ function trampoline_exit() {
         }
       }
 
-			// Write the configuration to a file
-	    $config_path = file_create_path('trampoline.config.inc');
-	    file_put_contents($config_path, '<?php $trampoline_config = '.var_export($trampoline_config, true).';');			
-		}		
-	}
+      // Write the configuration to a file
+      $config_path = './sites/default/files/trampoline.config.inc';
+      file_put_contents($config_path, '<?php $trampoline_config = '.var_export($trampoline_config, true).';');
+    }
+  }
 }
 
 /**
  * Implementation of hook_flush_caches().
  */
 function trampoline_flush_caches() {
-	// Delete the config file
-	file_delete(file_create_path('trampoline.config.inc'));	
+  // Delete the config file
+  file_delete('./sites/default/files/trampoline.config.inc');
 }
 
 /**
@@ -114,8 +121,8 @@ function trampoline_flush_caches() {
  * @see url
  */
 function trampoline_url($path = NULL, $options = array()) {
-	// Store the original path in the q argument
-	$defaults = array('query' => 'q='.$path);
-	$options = array_merge($defaults, $options);
-	return url(drupal_get_path('module', 'trampoline').'/index.php', $options);
+  // Store the original path in the q argument
+  $defaults = array('query' => 'q='.$path);
+  $options = array_merge($defaults, $options);
+  return url(drupal_get_path('module', 'trampoline').'/index.php', $options);
 }
