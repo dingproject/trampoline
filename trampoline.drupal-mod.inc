@@ -358,3 +358,139 @@ function file_create_path($dest = 0) {
   // File not found.
   return FALSE;
 }
+
+/**
+ * Pressflow moves drupal_set_header to bootstrap.inc. If drupal_set_header
+ * doesn't exist, we use these pressflow versions instead, as we can't
+ * included bootstrap.inc.
+ */
+if (!function_exists('drupal_set_header')) {
+  /**
+   * Set an HTTP response header for the current page.
+   *
+   * Note: When sending a Content-Type header, always include a 'charset' type,
+   * too. This is necessary to avoid security bugs (e.g. UTF-7 XSS).
+   *
+   * @param $name
+   *   The HTTP header name, or a status code followed by a reason phrase, e.g.
+   *   "404 Not Found".
+   * @param $value
+   *   The HTTP header value; if omitted, the specified header is unset.
+   * @param $append
+   *   Whether to append the value to an existing header or to replace it.
+   */
+  function drupal_set_header($name = NULL, $value = NULL, $append = FALSE) {
+    // The headers as name/value pairs.
+    static $headers = array();
+
+    if (!isset($name)) {
+      return $headers;
+    }
+
+    // Support the Drupal 6 header API
+    if (!isset($value)) {
+      if (strpos($name, ':') !== FALSE) {
+        $parts = explode(':', $name, 2);
+        $name = trim($parts[0]);
+        $value = trim($parts[1]);
+      }
+    }
+    if (substr($name, 0, 7) == 'HTTP/1.') {
+      $name = substr($name, 9);
+    }
+
+    // Save status codes using the special key ":status".
+    if (preg_match('/^\d{3} /', $name)) {
+      $value = $name;
+      $name = $name_lower = ':status';
+    }
+    else {
+      $name_lower = strtolower($name);
+    }
+    _drupal_set_preferred_header_name($name);
+
+    if (!isset($value)) {
+      $headers[$name_lower] = FALSE;
+    }
+    elseif (isset($headers[$name_lower]) && $append) {
+      // Multiple headers with identical names may be combined using comma (RFC
+      // 2616, section 4.2).
+      $headers[$name_lower] .= ',' . $value;
+    }
+    else {
+      $headers[$name_lower] = $value;
+    }
+    drupal_send_headers(array($name => $headers[$name_lower]), TRUE);
+  }
+
+  /**
+   * Get the HTTP response headers for the current page.
+   *
+   * @param $name
+   *   An HTTP header name. If omitted, all headers are returned as name/value
+   *   pairs. If an array value is FALSE, the header has been unset.
+   * @return
+   *   A string containing the header value, or FALSE if the header has been set,
+   *   or NULL if the header has not been set.
+   */
+  function drupal_get_header($name = NULL) {
+    $headers = drupal_set_header();
+    if (isset($name)) {
+      $name = strtolower($name);
+      return isset($headers[$name]) ? $headers[$name] : NULL;
+    }
+    else {
+      return $headers;
+    }
+  }
+
+  /**
+   * Header names are case-insensitive, but for maximum compatibility they should
+   * follow "common form" (see RFC 2617, section 4.2).
+   */
+  function _drupal_set_preferred_header_name($name = NULL) {
+    static $header_names = array();
+
+    if (!isset($name)) {
+      return $header_names;
+    }
+    $header_names[strtolower($name)] = $name;
+  }
+
+  /**
+   * Send the HTTP response headers previously set using drupal_set_header().
+   * Add default headers, unless they have been replaced or unset using
+   * drupal_set_header().
+   *
+   * @param $default_headers
+   *   An array of headers as name/value pairs.
+   * @param $single
+   *   If TRUE and headers have already be sent, send only the specified header.
+   */
+  function drupal_send_headers($default_headers = array(), $only_default = FALSE) {
+    static $headers_sent = FALSE;
+    $headers = drupal_get_header();
+    if ($only_default && $headers_sent) {
+      $headers = array();
+    }
+    $headers_sent = TRUE;
+
+    $header_names = _drupal_set_preferred_header_name();
+    foreach ($default_headers as $name => $value) {
+      $name_lower = strtolower($name);
+      if (!isset($headers[$name_lower])) {
+        $headers[$name_lower] = $value;
+        $header_names[$name_lower] = $name;
+      }
+    }
+    foreach ($headers as $name_lower => $value) {
+      if ($name_lower == ':status') {
+        header($_SERVER['SERVER_PROTOCOL'] . ' ' . $value);
+      }
+      // Skip headers that have been unset.
+      elseif ($value) {
+        header($header_names[$name_lower] . ': ' . $value);
+      }
+    }
+  }
+}
