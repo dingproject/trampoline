@@ -60,6 +60,78 @@ function theme() {
   }
 }
 
+function module_exists($module) { return true; }
+
+/**
+ * Finds all files that match a given mask in a given directory.
+ * Directories and files beginning with a period are excluded; this
+ * prevents hidden files and directories (such as SVN working directories)
+ * from being scanned.
+ *
+ * @param $dir
+ *   The base directory for the scan, without trailing slash.
+ * @param $mask
+ *   The regular expression of the files to find.
+ * @param $nomask
+ *   An array of files/directories to ignore.
+ * @param $callback
+ *   The callback function to call for each match.
+ * @param $recurse
+ *   When TRUE, the directory scan will recurse the entire tree
+ *   starting at the provided directory.
+ * @param $key
+ *   The key to be used for the returned array of files. Possible
+ *   values are "filename", for the path starting with $dir,
+ *   "basename", for the basename of the file, and "name" for the name
+ *   of the file without an extension.
+ * @param $min_depth
+ *   Minimum depth of directories to return files from.
+ * @param $depth
+ *   Current depth of recursion. This parameter is only used internally and should not be passed.
+ *
+ * @return
+ *   An associative array (keyed on the provided key) of objects with
+ *   "path", "basename", and "name" members corresponding to the
+ *   matching files.
+ */
+function file_scan_directory($dir, $mask, $nomask = array('.', '..', 'CVS'), $callback = 0, $recurse = TRUE, $key = 'filename', $min_depth = 0, $depth = 0) {
+  $key = (in_array($key, array('filename', 'basename', 'name')) ? $key : 'filename');
+  $files = array();
+
+  if (is_dir($dir) && $handle = opendir($dir)) {
+    while (FALSE !== ($file = readdir($handle))) {
+      if (!in_array($file, $nomask) && $file[0] != '.') {
+        if (is_dir("$dir/$file") && $recurse) {
+          // Give priority to files in this folder by merging them in after any subdirectory files.
+          $files = array_merge(file_scan_directory("$dir/$file", $mask, $nomask, $callback, $recurse, $key, $min_depth, $depth + 1), $files);
+        }
+        elseif ($depth >= $min_depth && ereg($mask, $file)) {
+          // Always use this match over anything already set in $files with the same $$key.
+          $filename = "$dir/$file";
+          $basename = basename($file);
+          $name = substr($basename, 0, strrpos($basename, '.'));
+          $files[$$key] = new stdClass();
+          $files[$$key]->filename = $filename;
+          $files[$$key]->basename = $basename;
+          $files[$$key]->name = $name;
+          if ($callback) {
+            $callback($filename);
+          }
+        }
+      }
+    }
+
+    closedir($handle);
+  }
+
+  return $files;
+}
+function module_implements($hook, $sort = FALSE, $refresh = FALSE) {
+  global $trampoline_config;
+
+  return (array) $trampoline_config['hooks'][$hook];
+}
+
 /**
  * Gets the value of a variable. 
  * 
@@ -108,7 +180,7 @@ function cache_get($cid, $table = 'cache') {
 	
   //Use a simple variable based cache. 
   //Cache will automatically expire after request completion
-	if ($trampoline_cache[$table.'_'.$cid]) {
+	if (is_array($trampoline_cache) && array_key_exists($table . '_' . $cid, $trampoline_cache) && $trampoline_cache[$table.'_'.$cid]) {
 		return array('data' => $trampoline_cache[$table.'_'.$cid]);
 	} else {
 		return FALSE;
@@ -162,7 +234,7 @@ function drupal_get_filename($type, $name, $filename = NULL) {
     foreach ($paths as $config) {
 	    $dir = (($type == 'theme_engine') ? 'themes/engines' : "${type}s");
 	    $file = (($type == 'theme_engine') ? "$name.engine" : "$name.$type");
-	    foreach (array("$config/$dir/$file", "$config/$dir/$name/$file", "$dir/$file", "$dir/$name/$file") as $file) {
+	    foreach (array("$config/$dir/$file", "$config/$dir/$name/$file", "$dir/$file", "$dir/$name/$file", "$config/$dir/contrib/$name/$file") as $file) {
 	      if (file_exists($file)) {
 	        $files[$type][$name] = $file;
 	        break(2);
@@ -170,10 +242,39 @@ function drupal_get_filename($type, $name, $filename = NULL) {
 	    }
     }
   }
-
   if (isset($files[$type][$name])) {
-    return $files[$type][$name];
+    return './'. str_replace($_SERVER['DOCUMENT_ROOT'], '', $files[$type][$name]);
+    //return $files[$type][$name];
   }
+}
+/**
+ * Invoke a hook in all enabled modules that implement it.
+ *
+ * @param $hook
+ *   The name of the hook to invoke.
+ * @param ...
+ *   Arguments to pass to the hook.
+ * @return
+ *   An array of return values of the hook implementations. If modules return
+ *   arrays from their implementations, those are merged into one array.
+ */
+function module_invoke_all() {
+  $args = func_get_args();
+  $hook = $args[0];
+  unset($args[0]);
+  $return = array();
+  foreach (module_implements($hook) as $module) {
+    $function = $module .'_'. $hook;
+    $result = call_user_func_array($function, $args);
+    if (isset($result) && is_array($result)) {
+      $return = array_merge_recursive($return, $result);
+    }
+    else if (isset($result)) {
+      $return[] = $result;
+    }
+  }
+
+  return $return;
 }
 
 /**
@@ -230,7 +331,7 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
     WATCHDOG_WARNING => E_USER_WARNING,
 	);
 	
-	trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
+	//trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
 }
  
 /**
