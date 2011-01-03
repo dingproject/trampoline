@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * Implements hook_init()
+ */
+function trampoline_init() {
+	drupal_add_js(array('trampolinePath' => '/' . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');	
+}
+
+/**
  * Implementation of hook_exit()
  */
 function trampoline_exit() {
@@ -8,11 +15,10 @@ function trampoline_exit() {
 	global $profile;
 	global $theme_key;
 	 
-	$config_path = file_create_path('trampoline.config.inc');
-	
+  //$config_path = file_create_path('trampoline.config.inc');
 	// Only build the configuration files once. 
 	// Clear the cache to rebuild it!
-	if (!file_exists($config_path)) {
+	if (!file_exists('./sites/default/files/trampoline.config.inc')) {
 		$trampoline_config = array();
 		
 		//Build base configuration
@@ -29,7 +35,6 @@ function trampoline_exit() {
 		$menu_router = menu_router_build();
 		// NB: The theme registry is only available from this function if it has been build previously.
 		$theme_registry = theme_get_registry();
-		
 		foreach ($routes as $route => $config) {
 			if (isset($menu_router[$route])) {
 				$menu_route = $menu_router[$route];
@@ -69,7 +74,24 @@ function trampoline_exit() {
 			}
 
 			$trampoline_config['routes'] = $trampoline_routes;
-			
+
+      if (is_array($config['hooks'])) {
+        foreach ($config['hooks'] as $hook => $name) {
+          if (is_array($name)) {
+          $implementations = module_implements($hook);
+            foreach ($implementations as $i) {
+              if (in_array($i, $name)) {
+                $trampoline_config['hooks'][$hook] = $i;
+              }
+            }
+          }
+          else {
+            $implementations = module_implements($name);
+            $trampoline_config['hooks'][$name] = $implementations;
+          }
+        }
+      }
+
 			// Write the configuration to a file
 	    $config_path = file_create_path('trampoline.config.inc');
 	    file_put_contents($config_path, '<?php $trampoline_config = '.var_export($trampoline_config, true).';');			
