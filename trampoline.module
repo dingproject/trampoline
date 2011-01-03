@@ -14,11 +14,12 @@ function trampoline_exit() {
   global $language;
   global $theme_key;
   $profile = variable_get('install_profile', 'default');
+  module_load_include('inc', 'trampoline', 'trampoline');
 
   //$config_path = file_create_path('trampoline.config.inc');
   // Only build the configuration files once.
   // Clear the cache to rebuild it!
-  if (!file_exists('./sites/default/files/trampoline.config.inc')) {
+  if (!file_exists(trampoline_files_path() . '/trampoline.config.inc')) {
     $trampoline_config = array();
 
     //Build base configuration
@@ -100,7 +101,7 @@ function trampoline_exit() {
       }
 
       // Write the configuration to a file
-      $config_path = './sites/default/files/trampoline.config.inc';
+      $config_path = trampoline_files_path() . '/trampoline.config.inc';
       file_put_contents($config_path, '<?php $trampoline_config = '.var_export($trampoline_config, true).';');
     }
   }
@@ -111,7 +112,8 @@ function trampoline_exit() {
  */
 function trampoline_flush_caches() {
   // Delete the config file
-  file_delete('./sites/default/files/trampoline.config.inc');
+  module_load_include('inc', 'trampoline', 'trampoline');
+  file_delete(trampoline_files_path() . '/trampoline.config.inc');
 }
 
 /**
