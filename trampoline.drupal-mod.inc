@@ -179,50 +179,8 @@ function variable_set($name, $value) {
 }
 
 /**
- * Gets a value from the cache.
- *
- * This version only supports memory based cache and is reset between request.
- *
- * Uses same arguments as original cache_get.
- *
- * @see cache_get
- */
-function cache_get($cid, $table = 'cache') {
-  global $trampoline_cache;
-
-  //Use a simple variable based cache.
-  //Cache will automatically expire after request completion
-  if (is_array($trampoline_cache) && array_key_exists($table . '_' . $cid, $trampoline_cache) && $trampoline_cache[$table.'_'.$cid]) {
-    return array('data' => $trampoline_cache[$table.'_'.$cid]);
-  } else {
-    return FALSE;
-  }
-}
-
-/**
- * Caches a value.
- *
- * This version only supports memory based cache and is reset between request.
- *
- * Uses same arguments as original cache_set.
- *
- * @see cache_set
- */
-function cache_set($cid, $data, $table = 'cache', $expire = CACHE_PERMANENT, $headers = NULL) {
-  global $trampoline_cache;
-
-  //Use a simple variable based cache.
-  //Cache will automatically expire after request completion
-  if (!isset($trampoline_cache)) {
-    $trampoline_cache = array();
-  }
-  $trampoline_cache[$table.'_'.$cid] = $data;
-}
-
-/**
- * Caches a value.
- *
- * This version only supports memory based cache and is reset between request.
+ * Returns and optionally sets the filename for a system item (module,
+ * theme, etc.).
  *
  * Uses same arguments as original drupal_get_filename.
  *
@@ -343,7 +301,9 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
     WATCHDOG_NOTICE => E_USER_WARNING,
     WATCHDOG_WARNING => E_USER_WARNING,
   );
-
+  //Clean up arguments to avoid warnings
+  $variables = (!$variables) ? array() : $variables;
+  
   trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
 }
 
