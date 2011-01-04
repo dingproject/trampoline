@@ -270,6 +270,16 @@ function conf_path($require_settings = TRUE, $reset = FALSE) {
 }
 
 /**
+ * Determine the default 'files' directory.
+ *
+ * @see file_directory_path
+ */
+function file_directory_path() {
+  return trampoline_files_path();
+}
+
+
+/**
  * Processes an HTML attribute value and ensures it does not contain an URL
  * with a disallowed protocol (e.g. javascript:)
  *

@@ -121,6 +121,20 @@ define('WATCHDOG_INFO', 6);
  */
 define('WATCHDOG_DEBUG', 7);
 
+/**
+ * Encode special characters in a plain-text string for display as HTML.
+ *
+ * Also validates strings as UTF-8 to prevent cross site scripting attacks on
+ * Internet Explorer 6.
+ *
+ * @param $text
+ *   The text to be checked or processed.
+ * @return
+ *   An HTML safe version of $text, or an empty string if $text is not
+ *   valid UTF-8.
+ *
+ * @see drupal_validate_utf8().
+ */
 function check_plain($text) {
   static $php525;
 
@@ -139,6 +153,43 @@ function check_plain($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
   }
   return (preg_match('/^./us', $text) == 1) ? htmlspecialchars($text, ENT_QUOTES, 'UTF-8') : '';
+}
+
+/**
+ * Load a module include file.
+ * 
+ * Examples:
+ * @code
+ *   // Load node.admin.inc from the node module.
+ *   module_load_include('inc', 'node', 'node.admin');
+ *   // Load content_types.inc from the node module.
+ *   module_load_include('inc', 'node', 'content_types');  
+ * @endcode
+ * 
+ * Do not use this function to load an install file. Use module_load_install()
+ * instead.
+ *
+ * @param $type
+ *   The include file's type (file extension).
+ * @param $module
+ *   The module to which the include file belongs.
+ * @param $name
+ *   Optionally, specify the base file name (without the $type extension). 
+ *   If not set, $module is used.
+ */
+function module_load_include($type, $module, $name = NULL) {
+  if (empty($name)) {
+    $name = $module;
+  }
+
+  $file = './'. drupal_get_path('module', $module) ."/$name.$type";
+
+  if (is_file($file)) {
+    require_once $file;
+  }
+  else {
+    return FALSE;
+  }
 }
 
 function theme_placeholder($text) {
