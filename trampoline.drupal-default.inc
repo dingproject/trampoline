@@ -3,7 +3,7 @@
 /**
  * This file contains code which has been directly copy/pasted from
  * elsewhere to be used by Trampoline.
- */ 
+ */
 
 /**
  * Indicates that the item should never be removed unless explicitly told to
@@ -139,4 +139,16 @@ function check_plain($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
   }
   return (preg_match('/^./us', $text) == 1) ? htmlspecialchars($text, ENT_QUOTES, 'UTF-8') : '';
+}
+
+function theme_placeholder($text) {
+  return '<em>' . check_plain($text) . '</em>';
+}
+
+function theme_image($path, $alt = '', $title = '', $attributes = NULL, $getsize = TRUE) {
+  if (!$getsize || (is_file($path) && (list($width, $height, $type, $image_attributes) = @getimagesize($path)))) {
+    $attributes = drupal_attributes($attributes);
+    $url = (url($path) == $path) ? $path : (base_path() . $path);
+    return '<img src="' . check_url($url) . '" alt="' . check_plain($alt) . '" title="' . check_plain($title) . '" ' . (isset($image_attributes) ? $image_attributes : '') . $attributes . ' />';
+  }
 }

@@ -12,8 +12,9 @@ function trampoline_run($config) {
   global $language; //Language global used by Drupal
   global $profile; // Profile global used by Drupal
   global $base_path;
+  global $base_url;
   $trampoline_config = $config;
-        $debug = isset($_GET['debug']);
+  $debug = isset($_GET['debug']);
 
   //Set profile
   $profile = $config['profile'];
@@ -22,7 +23,10 @@ function trampoline_run($config) {
   $language->language = $config['language'];
 
   //Set base path
-  $base_path = '/';
+  $base_path = $config['base_path'];
+
+  //Set base url
+  $base_url = $config['base_url'];
 
   //Do not display errors as output will prevent us from setting headers
   if ($debug) {
@@ -47,9 +51,9 @@ function trampoline_run($config) {
           require drupal_get_path('module', $trampoline_config['hooks']['ctools_plugin_directory']) . '/' . $trampoline_config['hooks']['ctools_plugin_directory']. '.module';
         }
         if (isset($config['includes']) && is_array($config['includes'])) {
-          $base_path = trampoline_base_path();
+          $trampoline_base_path = trampoline_base_path();
           foreach ($config['includes'] as $file) {
-            require $base_path.'/'.$file;
+            require $trampoline_base_path.'/'.$file;
           }
         }
         if (isset($config['variables'])) {

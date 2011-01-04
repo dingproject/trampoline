@@ -1,6 +1,37 @@
 <?php
 
 /**
+ * Implementation of hook_form_FORM_ID_alter().
+ *
+ * Add a reset button to the performance page.
+ */
+function trampoline_form_system_performance_settings_alter(&$form, $form_state) {
+  $form['trampoline'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Trampoline AJAX booster'),
+    '#description' => t("Trampoline allows modules to invoke AJAX callbacks without requiring a full Drupal bootstrap for the callback."),
+  );
+
+  $form['trampoline']['trampoline_flush'] = array(
+    '#type' => 'submit',
+    '#value' => t('Rebuild trampoline file'),
+    '#submit' => array('trampoline_admin_flush_caches'),
+  );
+
+  $form['clear_cache']['#weight'] = 5;
+  $form['buttons']['#weight'] = 10;
+
+}
+
+/**
+ *
+ */
+function trampoline_admin_flush_caches(&$form, $form_state) {
+  trampoline_flush_caches();
+  drupal_set_message(t('Trampoline file will be rebuild on next use.'));
+}
+
+/**
  * Implements hook_init()
  */
 function trampoline_init() {
@@ -13,12 +44,12 @@ function trampoline_init() {
 function trampoline_exit() {
   global $language;
   global $theme_key;
+  global $base_url;
   $profile = variable_get('install_profile', 'default');
   module_load_include('inc', 'trampoline', 'trampoline');
 
-  //$config_path = file_create_path('trampoline.config.inc');
-  // Only build the configuration files once.
-  // Clear the cache to rebuild it!
+  // Only build the configuration files once.  Clear the cache to rebuild it,
+  // or use the button on admin/settings/performance.
   if (!file_exists(trampoline_files_path() . '/trampoline.config.inc')) {
     $trampoline_config = array();
 
@@ -26,6 +57,9 @@ function trampoline_exit() {
     $trampoline_config['language'] = $language->language;
     $trampoline_config['profile'] = $profile;
     $trampoline_config['theme_path'] = drupal_get_path('theme', $theme_key);
+    $trampoline_config['theme_settings'] = theme_get_setting();
+    $trampoline_config['base_path'] = base_path();
+    $trampoline_config['base_url'] = $base_url;
 
     //Build route configuration
     $trampoline_routes = array();
@@ -63,8 +97,9 @@ function trampoline_exit() {
         //Get the arguments
         $route_config['arguments'] = $menu_route['page arguments'];
 
+        $route_config['variables'] = array();
+        $route_config['variables']['clean_url'] = variable_get('clean_url', '0');
         if (isset($config['variables'])) {
-          $route_config['variables'] = array();
           foreach ($config['variables'] as $variable) {
             $route_config['variables'][$variable] = variable_get($variable, NULL);
           }

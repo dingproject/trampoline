@@ -44,20 +44,32 @@ function theme() {
       }
     }
 
-    //Render templates
-    $file_path = trampoline_base_path().'/'.$theme_info['template'].'.tpl.php';
-    if ($theme_info['template'] &&
-        (file_exists($file_path))) {
+    if ($theme_info['template']) {
+      //Render templates
+      $file_path = trampoline_base_path() . '/' . $theme_info['template'] . '.tpl.php';
 
-      ob_start();
-      extract($named_args);
-      require_once $file_path;
-      $output = ob_get_contents();
-      ob_end_clean();
+      if ($theme_info['template'] &&
+          (file_exists($file_path))) {
 
-      return $output;
+        ob_start();
+        extract($named_args);
+        require $file_path;
+        $output = ob_get_contents();
+        ob_end_clean();
+
+        return $output;
+      }
+    }
+    elseif ($theme_info['function'] && function_exists($theme_info['function'])) {
+      return call_user_func_array($theme_info['function'], $named_args);
     }
   }
+}
+
+function theme_get_setting($setting_name, $refresh = FALSE) {
+  global $trampoline_config;
+
+  return isset($trampoline_config['theme_settings'][$setting_name]) ? $trampoline_config['theme_settings'] : NULL;
 }
 
 function module_exists($module) { return true; }
@@ -332,7 +344,7 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
     WATCHDOG_WARNING => E_USER_WARNING,
   );
 
-  //trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
+  trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
 }
 
 /**
