@@ -7,9 +7,9 @@
  */
 function trampoline_run($config) {
   // Globals - ugggh
-  global $trampoline_config; //Internal configuration
-  global $trampoline_route; //Active route
-  global $language; //Language global used by Drupal
+  global $trampoline_config; // Internal configuration
+  global $trampoline_route; // Active route
+  global $language; // Language global used by Drupal
   global $profile; // Profile global used by Drupal
   global $base_path;
   global $base_url;
@@ -28,7 +28,7 @@ function trampoline_run($config) {
   //Set base url
   $base_url = $config['base_url'];
 
-  //Do not display errors as output will prevent us from setting headers
+  // Do not display errors as output will prevent us from setting headers
   if ($debug) {
     ini_set('display_errors', TRUE);
     error_reporting(E_ALL & ~E_NOTICE);
@@ -37,6 +37,7 @@ function trampoline_run($config) {
     ini_set('display_errors', FALSE);
     ini_set('error_reporting', 'E_ALL & ~E_NOTICE');
   }
+
   // We (re)use the q variable to represent the original path
   $path = $_REQUEST['q'];
   if (isset($config['routes']) && is_array($config['routes'])) {
