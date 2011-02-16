@@ -54,7 +54,7 @@ function trampoline_run($config) {
         if (isset($config['includes']) && is_array($config['includes'])) {
           $trampoline_base_path = trampoline_base_path();
           foreach ($config['includes'] as $file) {
-            require $trampoline_base_path.'/'.$file;
+            require $trampoline_base_path . '/' . $file;
           }
         }
         if (isset($config['variables'])) {
@@ -80,7 +80,7 @@ function trampoline_base_path() {
   if (!isset($doc_root)) {
     $doc_root = realpath($_SERVER['DOCUMENT_ROOT']);
 
-    if (!is_dir($doc_root.'/sites')) {
+    if (!is_dir($doc_root . '/sites')) {
       trigger_error('Trampoline unable to determine Drupal base path', E_USER_ERROR);
     }
   }
@@ -99,8 +99,8 @@ function trampoline_files_path() {
     //Potential locations for the files directory.
     $files_paths = array('files', 'sites/default/files');
     foreach ($files_paths as $fp) {
-      if (is_dir($base_path.'/'.$fp)) {
-        $file_path = $base_path.'/'.$fp;
+      if (is_dir($base_path . '/' . $fp)) {
+        $file_path = $base_path . '/' . $fp;
         break;
       }
     }
@@ -125,8 +125,8 @@ function trampoline_conf_path() {
     $conf_paths = array('sites/default');
     foreach ($conf_paths as $path) {
       // We only have the correct location if it contains the settings.php file
-      if (is_dir($base_path.'/'.$path) && file_exists($base_path.'/'.$path.'/settings.php')) {
-        $conf_path = $base_path.'/'.$path;
+      if (is_dir($base_path . '/' . $path) && file_exists($base_path . '/' . $path . '/settings.php')) {
+        $conf_path = $base_path . '/' . $path;
         break;
       }
     }
@@ -143,7 +143,7 @@ function trampoline_conf_path() {
  */
 function trampoline_profile_path() {
   global $profile;
-  return trampoline_base_path().'/profiles/'.$profile;
+  return trampoline_base_path() . '/profiles/' . $profile;
 }
 
 /**
