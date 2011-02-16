@@ -24,7 +24,9 @@ function trampoline_form_system_performance_settings_alter(&$form, $form_state) 
 }
 
 /**
+ * Submit handler for the Trampoline rebuild button.
  *
+ * @see trampoline_form_system_performance_settings_alter().
  */
 function trampoline_admin_flush_caches(&$form, $form_state) {
   trampoline_flush_caches();
