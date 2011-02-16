@@ -35,7 +35,7 @@ function trampoline_admin_flush_caches(&$form, $form_state) {
  * Implements hook_init()
  */
 function trampoline_init() {
-  drupal_add_js(array('trampolinePath' => '/' . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');
+  drupal_add_js(array('trampolinePath' => base_path() . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');
 }
 
 /**
