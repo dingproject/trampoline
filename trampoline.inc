@@ -107,6 +107,7 @@ function trampoline_files_path() {
 
     if (!isset($file_path)) {
       trigger_error('Trampoline unable to determine Drupal files path', E_USER_ERROR);
+      return FALSE;
     }
   }
 

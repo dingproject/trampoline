@@ -139,7 +139,12 @@ function trampoline_exit() {
 
       // Write the configuration to a file
       $config_path = trampoline_files_path() . '/trampoline.config.inc';
-      file_put_contents($config_path, '<?php $trampoline_config = '.var_export($trampoline_config, true).';');
+
+      if ($config_path) {
+        // TODO: This is a nasty security hole. PHP files writeable by
+        // the web server, ouch.
+        file_put_contents($config_path, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
+      }
     }
   }
 }
