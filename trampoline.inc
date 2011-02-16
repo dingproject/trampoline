@@ -80,7 +80,7 @@ function trampoline_base_path() {
     $doc_root = realpath($_SERVER['DOCUMENT_ROOT']);
 
     if (!is_dir($doc_root.'/sites')) {
-      trigger_error('Trampoline unable to determine Drupal base path', E_ERROR);
+      trigger_error('Trampoline unable to determine Drupal base path', E_USER_ERROR);
     }
   }
 
@@ -105,7 +105,7 @@ function trampoline_files_path() {
     }
 
     if (!isset($file_path)) {
-      trigger_error('Trampoline unable to determine Drupal files path', E_ERROR);
+      trigger_error('Trampoline unable to determine Drupal files path', E_USER_ERROR);
     }
   }
 
@@ -131,7 +131,7 @@ function trampoline_conf_path() {
     }
 
     if (!isset($conf_path)) {
-      trigger_error('Trampoline unable to determine Drupal configuration path', E_ERROR);
+      trigger_error('Trampoline unable to determine Drupal configuration path', E_USER_ERROR);
     }
   }
   return $conf_path;
