@@ -97,8 +97,7 @@ function trampoline_files_path() {
   if (!isset($file_path)) {
     $base_path = trampoline_base_path();
     // Potential locations for the files directory.
-    $files_paths = array('files', 'sites/default/files');
-    foreach ($files_paths as $path) {
+    foreach (array('files', 'sites/default/files') as $path) {
       if (is_dir($base_path . '/' . $path)) {
         $file_path = $base_path . '/' . $path;
         break;
