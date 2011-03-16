@@ -158,7 +158,12 @@ function variable_get($name, $default) {
 
   if (!isset($drupal_vars)) {
     require trampoline_conf_path().'/settings.php';
-    $drupal_vars = $conf;
+    if (isset($conf)) {
+      $drupal_vars = $conf;
+    }
+    else {
+      $drupal_vars = array();
+    }
   }
 
   return (isset($drupal_vars[$name])) ? $drupal_vars[$name] : $default;
@@ -313,7 +318,7 @@ function watchdog($type, $message, $variables = array(), $severity = WATCHDOG_NO
   );
   //Clean up arguments to avoid warnings
   $variables = (!$variables) ? array() : $variables;
-  
+
   trigger_error(sprintf('%s: %s', $type, str_replace(array_keys($variables), array_values($variables), $message)), $severities[$severity]);
 }
 

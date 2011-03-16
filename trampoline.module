@@ -59,7 +59,7 @@ function trampoline_exit() {
     $trampoline_config['language'] = $language->language;
     $trampoline_config['profile'] = $profile;
     $trampoline_config['theme_path'] = drupal_get_path('theme', $theme_key);
-    $trampoline_config['theme_settings'] = theme_get_setting();
+    $trampoline_config['theme_settings'] = theme_get_settings();
     $trampoline_config['base_path'] = base_path();
     $trampoline_config['base_url'] = $base_url;
 
@@ -67,11 +67,16 @@ function trampoline_exit() {
     $trampoline_routes = array();
 
     $routes = module_invoke_all('trampoline');
-
     // We need these basic structures to build the trampoline config
     $menu_router = menu_router_build();
     // NB: The theme registry is only available from this function if it has been build previously.
     $theme_registry = theme_get_registry();
+
+
+    foreach (module_invoke_all('trampoline_variables') as $variable) {
+      $trampoline_config['variables'][$variable] = variable_get($variable, NULL);
+    }
+
     foreach ($routes as $route => $config) {
       if (isset($menu_router[$route])) {
         $menu_route = $menu_router[$route];
@@ -101,12 +106,6 @@ function trampoline_exit() {
 
         $route_config['variables'] = array();
         $route_config['variables']['clean_url'] = variable_get('clean_url', '0');
-        if (isset($config['variables'])) {
-          foreach ($config['variables'] as $variable) {
-            $route_config['variables'][$variable] = variable_get($variable, NULL);
-          }
-        }
-
         if (isset($config['theme_hooks'])) {
           //Get theme information
           $route_config['theme'] = array();
@@ -115,36 +114,36 @@ function trampoline_exit() {
           }
         }
 
-        $trampoline_routes[$route] = $route_config;
-      }
 
-      $trampoline_config['routes'] = $trampoline_routes;
-
-      if (is_array($config['hooks'])) {
-        foreach ($config['hooks'] as $hook => $name) {
-          if (is_array($name)) {
-          $implementations = module_implements($hook);
-            foreach ($implementations as $i) {
-              if (in_array($i, $name)) {
-                $trampoline_config['hooks'][$hook] = $i;
+        if (is_array($config['hooks'])) {
+          foreach ($config['hooks'] as $hook => $name) {
+            if (is_array($name)) {
+              $implementations = module_implements($hook);
+              foreach ($implementations as $i) {
+                if (in_array($i, $name)) {
+                  $trampoline_config['hooks'][$hook] = $i;
+                }
               }
             }
-          }
-          else {
-            $implementations = module_implements($name);
-            $trampoline_config['hooks'][$name] = $implementations;
+            else {
+              $implementations = module_implements($name);
+              $trampoline_config['hooks'][$name] = $implementations;
+            }
           }
         }
       }
+      $trampoline_routes[$route] = $route_config;
+    }
 
-      // Write the configuration to a file
-      $config_path = trampoline_files_path() . '/trampoline.config.inc';
+    $trampoline_config['routes'] = $trampoline_routes;
 
-      if ($config_path) {
-        // TODO: This is a nasty security hole. PHP files writeable by
-        // the web server, ouch.
-        file_put_contents($config_path, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
-      }
+    // Write the configuration to a file
+    $config_path = trampoline_files_path() . '/trampoline.config.inc';
+
+    if ($config_path) {
+      // TODO: This is a nasty security hole. PHP files writeable by
+      // the web server, ouch.
+      file_put_contents($config_path, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
     }
   }
 }

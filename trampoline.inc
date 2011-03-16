@@ -38,6 +38,12 @@ function trampoline_run($config) {
     ini_set('error_reporting', 'E_ALL & ~E_NOTICE');
   }
 
+  if (isset($config['variables'])) {
+    foreach ($config['variables'] as $variable => $value) {
+      variable_set($variable, $value);
+    }
+  }
+
   // We (re)use the q variable to represent the original path
   $path = $_REQUEST['q'];
   if (isset($config['routes']) && is_array($config['routes'])) {
@@ -55,11 +61,6 @@ function trampoline_run($config) {
           $trampoline_base_path = trampoline_base_path();
           foreach ($config['includes'] as $file) {
             require $trampoline_base_path . '/' . $file;
-          }
-        }
-        if (isset($config['variables'])) {
-          foreach ($config['variables'] as $variable => $value) {
-            variable_set($variable, $value);
           }
         }
         // Execute callback with arguments
