@@ -38,12 +38,23 @@ function trampoline_admin_flush_caches(&$form, $form_state) {
  */
 function trampoline_init() {
   drupal_add_js(array('trampolinePath' => base_path() . drupal_get_path('module', 'trampoline') . '/index.php?q='), 'setting');
+  trampoline_build();
 }
 
 /**
- * Implementation of hook_exit()
+ * Implementation of hook_flush_caches().
  */
-function trampoline_exit() {
+function trampoline_flush_caches() {
+  // Delete the config file
+  module_load_include('inc', 'trampoline', 'trampoline');
+  file_delete(trampoline_files_path() . '/trampoline.config.inc');
+  trampoline_build();
+}
+
+/**
+ * Build config file for callback script.
+ */
+function trampoline_build() {
   global $language;
   global $theme_key;
   global $base_url;
@@ -146,15 +157,6 @@ function trampoline_exit() {
       file_put_contents($config_path, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
     }
   }
-}
-
-/**
- * Implementation of hook_flush_caches().
- */
-function trampoline_flush_caches() {
-  // Delete the config file
-  module_load_include('inc', 'trampoline', 'trampoline');
-  file_delete(trampoline_files_path() . '/trampoline.config.inc');
 }
 
 /**
