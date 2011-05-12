@@ -55,7 +55,42 @@ function trampoline_run($config) {
         $trampoline_route = $config;
         // Include required files
         if (array_key_exists('ctools_plugin_directory', $trampoline_config['hooks'])) {
-          require drupal_get_path('module', $trampoline_config['hooks']['ctools_plugin_directory']) . '/' . $trampoline_config['hooks']['ctools_plugin_directory']. '.module';
+          require drupal_get_path('module', $trampoline_config['hooks']['ctools_plugin_directory']) . '/' . $trampoline_config['hooks']['ctools_plugin_directory'] . '.module';
+
+          // Drupal's autoload does not work within Trampoline, so we'll 
+          // have to load all the Ting Client includes ourselves.
+          $ting_files = array(
+            'TingClient.php',
+            'exception/TingClientException.php',
+            'adapter/TingClientRequestAdapter.php',
+            'log/TingClientLogger.php',
+            'log/TingClientDrupalDebugLogger.php',
+            'log/TingClientDrupalWatchDogLogger.php',
+            'log/TingClientVoidLogger.php',
+            'request/TingClientRequest.php',
+            'request/TingClientSearchRequest.php',
+            'request/TingClientCollectionRequest.php',
+            'request/TingClientObjectRecommendationRequest.php',
+            'request/TingClientObjectRequest.php',
+            'request/TingClientRequestFactory.php',
+            'request/TingClientScanRequest.php',
+            'request/TingClientSpellRequest.php',
+            'result/object/TingClientObject.php',
+            'result/object/TingClientObjectCollection.php',
+            'result/object/data/TingClientObjectData.php',
+            'result/recommendation/TingClientObjectRecommendation.php',
+            'result/scan/TingClientScanResult.php',
+            'result/scan/TingClientScanTerm.php',
+            'result/search/TingClientFacetResult.php',
+            'result/search/TingClientSearchResult.php',
+            'result/spell/TingClientSpellSuggestion.php',
+          );
+          $ting_path = drupal_get_path('module', 'ting');
+          foreach ($ting_files as $file) {
+            require $ting_path . '/lib/ting-client/lib/' . $file;
+          }
+
+          require drupal_get_path('module', 'nanosoap') . '/nanosoap.inc';
         }
         if (isset($config['includes']) && is_array($config['includes'])) {
           $trampoline_base_path = trampoline_base_path();
