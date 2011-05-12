@@ -1,4 +1,3 @@
-; $Id$
 name = Trampoline
 description = "Provides a lightweight proxy to allow AJAX/AHAH callbacks to avoid bootstrapping Drupal."
 core = 6.x
