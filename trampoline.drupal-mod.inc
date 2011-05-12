@@ -39,7 +39,7 @@ function theme() {
     if ($theme_info['preprocess functions']) {
       foreach ($theme_info['preprocess functions'] as $function) {
         if (function_exists($function)) {
-          call_user_func($function, &$named_args);
+          call_user_func($function, $named_args);
         }
       }
     }
