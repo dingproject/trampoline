@@ -1,9 +1,7 @@
 <?php
-
-
 /**
- * This file contains versions of existing Drupal functions customized
- * for Trampoline usage
+ * @file
+ * Customised version of Drupal core functions for Trampoline usage.
  */
 
 /**

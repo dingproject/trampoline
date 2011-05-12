@@ -1,4 +1,8 @@
 <?php
+/**
+ * @file
+ * Trampoline module to facilitate AJAX callbacks without a full Drupal bootstrap.
+ */
 
 /**
  * Implementation of hook_form_FORM_ID_alter().
