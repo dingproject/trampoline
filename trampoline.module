@@ -63,6 +63,11 @@ function trampoline_build() {
   global $theme_key;
   global $base_url;
   $profile = variable_get('install_profile', 'default');
+  
+  // Require common.inc to make drupal_get_path() available.
+  // hook_exit may be invoked without a full bootstrap and we need
+  // this function to generate paths properly.
+  require_once './includes/common.inc';
   module_load_include('inc', 'trampoline', 'trampoline');
 
   // Only build the configuration files once.  Clear the cache to rebuild it,
