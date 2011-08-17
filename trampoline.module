@@ -68,7 +68,11 @@ function trampoline_exit() {
 
     $routes = module_invoke_all('trampoline');
     // We need these basic structures to build the trampoline config
+    while (!lock_acquire('menu_rebuild')) {
+      lock_wait('menu_rebuild');
+    }
     $menu_router = menu_router_build();
+    lock_release('menu_rebuild');
     // NB: The theme registry is only available from this function if it has been build previously.
     $theme_registry = theme_get_registry();
 
@@ -80,7 +84,6 @@ function trampoline_exit() {
     foreach ($routes as $route => $config) {
       if (isset($menu_router[$route])) {
         $menu_route = $menu_router[$route];
-
         //Build the route configuration
         $route_config = array();
 
