@@ -49,10 +49,15 @@ function trampoline_exit() {
   global $base_url;
   $profile = variable_get('install_profile', 'default');
   module_load_include('inc', 'trampoline', 'trampoline');
+  $config_file = trampoline_files_path() . '/trampoline.config.inc';
 
   // Only build the configuration files once.  Clear the cache to rebuild it,
   // or use the button on admin/settings/performance.
-  if (!file_exists(trampoline_files_path() . '/trampoline.config.inc')) {
+  if (!file_exists($config_file)) {
+    if (!is_writable($config_file)) {
+      watchdog('trampoline', 'Config file @config is not writable.', array('@config' => $config_file), WATCHDOG_ERROR);
+      return;
+    }
     $trampoline_config = array();
 
     //Build base configuration
@@ -141,13 +146,9 @@ function trampoline_exit() {
     $trampoline_config['routes'] = $trampoline_routes;
 
     // Write the configuration to a file
-    $config_path = trampoline_files_path() . '/trampoline.config.inc';
-
-    if ($config_path) {
-      // TODO: This is a nasty security hole. PHP files writeable by
-      // the web server, ouch.
-      file_put_contents($config_path, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
-    }
+    // TODO: This is a nasty security hole. PHP files writeable by
+    // the web server, ouch.
+    file_put_contents($config_file, '<?php $trampoline_config = ' . var_export($trampoline_config, true) . ';');
   }
 }
 
