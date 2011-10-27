@@ -74,7 +74,7 @@ function trampoline_build() {
   // Only build the configuration files once.  Clear the cache to rebuild it,
   // or use the button on admin/settings/performance.
   if (!file_exists($config_file)) {
-    if (!is_writable($config_file)) {
+    if (!file_check_directory(trampoline_files_path(), FILE_CREATE_DIRECTORY)) {
       watchdog('trampoline', 'Config file @config is not writable.', array('@config' => $config_file), WATCHDOG_ERROR);
       return;
     }
